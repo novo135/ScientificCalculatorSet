@@ -42,10 +42,9 @@ unsigned int VariableInputs::numOfTerms(string input)
 				break;
 
 			case('-'):
-
-				if (i != 0 && 
-					!lastCharacterSign &&
-					!exponent) 
+				if (i != 0 || i != 1 &&
+				    !lastCharacterSign &&
+				    !exponent) 
 				{
 					++term;
 				}
