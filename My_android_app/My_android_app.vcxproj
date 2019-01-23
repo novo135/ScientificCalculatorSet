@@ -118,6 +118,7 @@
     <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MathOperation.cpp" />
+    <ClCompile Include="Node.cpp" />
     <ClCompile Include="Utilitites.cpp" />
     <ClCompile Include="VariableInputs.cpp" />
   </ItemGroup>

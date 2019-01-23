@@ -1,17 +1,18 @@
 #include "MathOperation.h"
-#include "VariableInputs.h"
 #include <iostream>
 #include <math.h>
 #include <cmath>
 #include <vector>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <ctime>
 
 using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
-
-VariableInputs VAR;
 
 // construct
 MathOperation::MathOperation()
@@ -26,41 +27,6 @@ MathOperation::MathOperation()
 MathOperation::~MathOperation()
 {
 
-}
-
-int MathOperation::mod_two(int a)
-{
-	if (a % 2 == 0)
-	{
-		return 1;
-	}
-	return 0;
-}
-
-int MathOperation::mod_three(int a)
-{
-	if (a % 3 == 0)
-	{
-		return 1;
-	}
-	return 0;
-}
-
-int MathOperation::mod_five(int a)
-{
-	if (a % 5 == 0)
-	{
-		return 1;
-	}
-	return 0;
-}
-
-int MathOperation::primeSquared(float a)
-{
-	if ( is_int(sqrtf(a)) ) {
-		return 1;
-	}
-	return 0;
 }
 
 int MathOperation::is_int(float a)
@@ -108,7 +74,16 @@ int MathOperation::least_com_multi(int a, int b)
 template<class T, class E>
 double MathOperation::add(T var, E var2)
 {
-	return (var + var2);
+	int i;
+	try 
+	{
+		i = (var + var2);
+		return i;
+	}
+	catch (...)
+	{
+		return 1;
+	}
 }
 
 template<class T, class E>
@@ -118,7 +93,7 @@ double MathOperation::subtract(T var, E var2)
 }
 
 template<class T, class E>
-double MathOperation::multiply(T var, E var2)
+inline double MathOperation::multiply(T var, E var2)
 {
 	return (var * var2);
 }
@@ -144,7 +119,7 @@ int MathOperation::single_factor(float input, bool print_to_screen)
 
 	if (print_to_screen)
 	{
-		for (vector<int>::reverse_iterator j = bar.rbegin(); j != bar.rend(); ++j)
+		for (vector<int>::reverse_iterator j = bar.rbegin(); j != bar.rend(); ++j) 
 		{
 			std::cout << *j << std::endl;
 		}
@@ -153,19 +128,45 @@ int MathOperation::single_factor(float input, bool print_to_screen)
 	return 0;
 }
 
-int MathOperation::interation_factoring(int & a, int & b)
+int MathOperation::factoringTwoVars(int & a, int & b)
 {
+	int factorable = 1;
 	int gcf = 0;
-	bool factorable = 1;
-
 	do
 	{
-		if (mod_three(a) && mod_three(b))
+		if (!gcf) 
+		{
+			if ((ceilf(sqrt(a)) == sqrt(a)) &&
+				(ceilf(sqrt(b)) == sqrt(a)))
+			{
+				a = sqrt(a);
+				b = sqrt(b);
+				gcf = INT_MAX;	// flag to indicate difference of squares
+				factorable = 0;
+			}
+			else if (floor(a / b) == a / b && 
+				a / b != 0) 
+			{
+				int i = b;
+				a = a / b;
+				b = 1;
+				return i;
+			}
+			else if (floor(b / a) == b / a && 
+				b / a != 0) 
+			{
+				int i = a;
+				b = b / a;
+				a = 1;
+				return i;
+			}
+		}
+		else if (a % 3 == 0 &&
+				 b % 3 == 0)
 		{
 			if (!gcf) {
 				gcf = 3;
 			}
-
 			else {
 				gcf = gcf * 3;
 			}
@@ -173,13 +174,12 @@ int MathOperation::interation_factoring(int & a, int & b)
 			a = a / 3;
 			b = b / 3;
 		}
-
-		else if (mod_two(a) && mod_two(b))
+		else if (a % 2 == 0 &&
+				 b % 2 == 0)
 		{
 			if (!gcf) {
 				gcf = 2;
 			}
-
 			else {
 				gcf = gcf * 2;
 			}
@@ -187,13 +187,12 @@ int MathOperation::interation_factoring(int & a, int & b)
 			a = a / 2;
 			b = b / 2;
 		}
-
-		else if (mod_five(a) && mod_five(b))
+		else if (a % 5 == 0 &&
+				 b % 5 == 0)
 		{
 			if (!gcf) {
 				gcf = 5;
 			}
-
 			else {
 				gcf = gcf * 5;
 			}
@@ -201,17 +200,81 @@ int MathOperation::interation_factoring(int & a, int & b)
 			a = a / 5;
 			b = b / 5;
 		}
-
-		else if (primeSquared(a) && primeSquared(b))
-		{
-			// need to figure out how to handle this
-		}
-
-		else
-		{
+		else {
 			factorable = 0;
 		}
+	} while (factorable);
 
+	return gcf;
+}
+
+int MathOperation::factoringThreeVars(int & a, int & b, int & c)
+{
+	int factorable = 1;
+	int gcf = 0;
+	do
+	{
+		if (!gcf)
+		{
+			if ((ceilf(sqrt(a)) == sqrt(a)) &&
+				(ceilf(sqrt(b)) == sqrt(a)) && 
+				 ceilf(sqrt(c)) == sqrt(a))
+			{
+				a = sqrt(a);
+				b = sqrt(b);
+				c = sqrt(c);
+				gcf = INT_MAX;	// flag to indicate difference of squares
+				factorable = 0;
+			}
+		}
+		else if (a % 3 == 0 &&
+				 b % 3 == 0 &&
+				 c % 3 == 0)
+		{
+			if (!gcf) {
+				gcf = 3;
+			}
+			else {
+				gcf = gcf * 3;
+			}
+
+			a = a / 3;
+			b = b / 3;
+			c = c / 3;
+		}
+		else if (a % 2 == 0 &&
+			     b % 2 == 0 && 
+				 c % 2 == 0)
+		{
+			if (!gcf) {
+				gcf = 2;
+			}
+			else {
+				gcf = gcf * 2;
+			}
+
+			a = a / 2;
+			b = b / 2;
+			c = c / 2;
+		}
+		else if (a % 5 == 0 &&
+			     b % 5 == 0 && 
+				 c % 5 == 0)
+		{
+			if (!gcf) {
+				gcf = 5;
+			}
+			else {
+				gcf = gcf * 5;
+			}
+
+			a = a / 5;
+			b = b / 5;
+			c = c / 5;
+		}
+		else {
+			factorable = 0;
+		}
 	} while (factorable);
 
 	return gcf;
@@ -234,97 +297,6 @@ float MathOperation::calc_triangle_side(float side_a, float side_b, float hypote
 	else {
 		return 0.0f;
 	}
-}
-
-inline void angle_calc(float side_a, float hypotenuse, float &angle_a, float &angle_b)
-{
-	// descrete case function pointer used in calc triangle
-	angle_a = sin(side_a / hypotenuse);
-	angle_b = 90.0f - angle_a;
-}
-
-void side_calc(float &hypotenuse, float &side_a, float &side_b, float &angle_a)
-{
-	// descrete case funciton pointer used in calc triangle
-	if (!hypotenuse && side_a && !side_b) {
-		hypotenuse = side_a / sin(90.0f - angle_a);				/// check to see if this is correct
-		side_b = (hypotenuse)*(hypotenuse) - (side_a)*(side_a);
-	}
-
-	else if (!hypotenuse && !side_a && side_b) {
-		hypotenuse = side_b / sin(angle_a);						/// check to this if this is correct
-		side_a = (hypotenuse)*(hypotenuse) - (side_b)*(side_b);
-	}
-
-	else if (hypotenuse && !side_a && !side_b) {
-		side_b = hypotenuse * sin(angle_a);						/// check to see if this is correct
-		side_a = (hypotenuse)*(hypotenuse) - (side_b)*(side_b);
-	}
-}
-
-uint8_t MathOperation::calc_spc_triangle(float& side_a, float& side_b, float& hypotenuse, float& angle_a, float& angle_b)
-{
-	if (angle_a or angle_b)
-	{
-		if (side_a)
-		{
-			if (angle_b && !angle_a) {
-				hypotenuse = side_a / sinf(angle_b);
-				side_b = sqrt((hypotenuse * hypotenuse) - (side_a * side_a));
-				angle_a = 90.0f - angle_b;
-			}
-			
-			else if (!angle_b && angle_a)
-			{
-
-			}
-
-			else if (angle_a && angle_b)
-			{
-
-			}
-		}
-
-		else if (side_b)
-		{
-			if (angle_a && !angle_b) {
-				hypotenuse = side_b / sinf(angle_a);
-				side_a = sqrt((hypotenuse*hypotenuse) - (side_b*side_b));
-				angle_b = 90.0f - angle_a;
-			}
-
-			else if (!angle_a && angle_b) {
-
-
-			}
-
-			else if (angle_a && angle_b)
-			{
-
-			}
-		}
-
-		else if (hypotenuse)
-		{
-			if (angle_a && !angle_b)
-			{
-				side_b = hypotenuse * sinf(angle_a);
-				side_a = sqrt( (hypotenuse*hypotenuse)-(side_b*side_b) );
-				angle_b = 90.0f - angle_a;
-			}
-
-			else if (!angle_a && angle_b) {
-
-
-			}
-
-			else if (angle_a && angle_b)
-			{
-
-			}
-		}
-	}
-	return 0;
 }
 
 long double MathOperation::factorial(int factorial)

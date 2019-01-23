@@ -1,56 +1,34 @@
+#include "Node.cpp"
 #include <iostream>
+#include <string>
 
-// descerte class for holding memory addresses and data
-
-class Node
-{
-public:
-	Node(float data);
-
-	Node* prev;
-	Node* next;
-	float data;
-};
-
-Node::Node(float data)
-{
-	this->prev = NULL;
-	this->next = NULL;
-	this->data = data;
-}
-
-
-
-
-
-
-//////////////////
-//  next class  //
-//////////////////
-
-
-
-
-
-
-
-#ifndef LINKED_LIST_H__
-#define LINKED_LIST_H__
+#ifndef LINKED_LIST_H
+#define LINKED_LIST_H
 
 class LinkedList
 {
 public:
 	LinkedList();
-	LinkedList(float data);
+	LinkedList(std::string data);
 	virtual ~LinkedList();
 
-	Node* head;		// front
-	Node* tail;		// rear
-	
-	void addData(float input);
-	void addLink(Node* newNode);
+	void printList(void);
+	void addLink(std::string data);
+	void addNthLink(std::string data, unsigned int position);
+	void setCursor(int desitnation);
+	void searchFordata(std::string lookingForThis);			// sets cursor to node which matches data
+	void findFirstOf(std::string needle);					// sets cursor to first istance of a node with data specified
+	int getSize(void);
+	Node* publicCursor(void);
 
+private:
+	Node* head;
+	Node* tail;
+	Node* cursor;
+	int cursorIndex;
+	int size;
 
 };
 
-#endif // !LINKED_LIST_H__
+#endif // !LINKED_LIST_H
+

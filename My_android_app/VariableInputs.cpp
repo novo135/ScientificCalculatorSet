@@ -1,8 +1,8 @@
 #include "VariableInputs.h"
-#include "Utilitites.h"
 #include <iostream>
 #include <string>
 #include <vector>
+#include <regex>
 
 using std::vector;
 using std::string;
@@ -12,19 +12,19 @@ using std::endl;
 
 
 VariableInputs::VariableInputs()
-	: stringIndex(0)
 {
-
 }
 
 
 VariableInputs::~VariableInputs()
 {
-
+	delete List;
 }
 
 unsigned int VariableInputs::numOfTerms(string input)
 {
+	/// account for multiple parathesis
+	int parathesisCounter = 0;
 	bool exponent = 0;
 	bool lastCharacterSign = 0;
 	int term = 1;
@@ -33,18 +33,16 @@ unsigned int VariableInputs::numOfTerms(string input)
 	{
 		switch (input[i])
 		{
-			case(' '):
-				break;
-
 			case('+'):
 				lastCharacterSign = 1;
 				++term;
 				break;
 
 			case('-'):
-				if (i != 0 || i != 1 &&
-				    !lastCharacterSign &&
-				    !exponent) 
+
+				if (i != 0 ^ i != 1 && 
+					!lastCharacterSign &&
+					!exponent) 
 				{
 					++term;
 				}
@@ -68,7 +66,15 @@ unsigned int VariableInputs::numOfTerms(string input)
 				if (exponent) {
 					exponent = 0;
 				}
+				else {
+					parathesisCounter = 0;
+				}
 				break;
+
+			case('('):
+				if (!exponent) {
+					++parathesisCounter;
+				}
 
 			default:
 				lastCharacterSign = 0;
@@ -131,23 +137,6 @@ const char VariableInputs::multiVarFind(string input)
 	return 0;
 }
 
-bool VariableInputs::isSign(char input)
-{
-	if (input == '+') {
-		return 1;
-	}
-	else if (input == '-') {
-		return 1;
-	}
-	else if (input == '*') {
-		return 1;
-	}
-	else if (input == '/') {
-		return 1;
-	}
-	return 0;
-}
-
 const char VariableInputs::getSign(char input)
 {
 	if (input == '+') {
@@ -165,21 +154,37 @@ const char VariableInputs::getSign(char input)
 	return 0;
 }
 
-int VariableInputs::findNextSign(string input, short termLocate)
+int VariableInputs::equationStatus(string polynomial)
 {
-	short lastSignLoc = termLocate;
-	bool exponent = 0;
+	if (polynomial.find('=')) {
+		return 1;
+	}
+	return 0;
+}
+
+int VariableInputs::findNextSign(string input, short termLocate, int counter)
+{
 	int i = termLocate + 1;
+	int encapTerm = 0;
+	short instanceCounter = 0;
+	bool exponent = 0;
 
 	for (i; i < input.size(); ++i)
 	{
-		if (getSign(input[i]))
+		if (!exponent && !encapTerm)
 		{
-			/// todo:
-			// pusdo code:
-			// if '-'sign 
-			// ignore 
-			// unless there is no digit after the negative
+			if (getSign(input[i])) 
+			{
+				if (input[i] == '-' && isdigit(input[i + 1])) {
+					/// don't know what goes here
+				}
+				else if (counter != instanceCounter) {
+					++instanceCounter;
+				}
+				else if (counter == instanceCounter) {
+					break;
+				}
+			}
 		}
 		else if (input[i] == '^') {
 			exponent = 1;
@@ -187,8 +192,18 @@ int VariableInputs::findNextSign(string input, short termLocate)
 		else if (input[i] == ')') {
 			exponent = 0;
 		}
-
+		else if (input[i] == '(' && input[i - 1] != '^') {
+			++encapTerm;
+		}
+		else if (input[i] && !exponent) {
+			--encapTerm;
+		}
 	}
+
+	if (i == input.size()) {
+		return 0;
+	}
+
 	return i;
 }
 
@@ -237,7 +252,8 @@ int VariableInputs::termIdenifier(string input)
 
 	for (char&c : input) 
 	{
-		if (isdigit(c) && !expo && !num) {
+		if (isdigit(c) && !expo && !num) 
+		{
 			intermeidate.push_back('1');
 			num = 1;
 		}
@@ -246,418 +262,115 @@ int VariableInputs::termIdenifier(string input)
 			intermeidate.push_back('2');
 		}
 
-		else if (c == '^') {
+		else if (c == '^')
+		{
 			expo = 1;
 			intermeidate.push_back('3');
 			break;
 		}
 	}
 
-	try
-	{
+	try {
 		return stoi(intermeidate);
 	}
-	catch (const std::invalid_argument)
-	{
+	catch (const std::invalid_argument) {
 		return 0;
 	}
 }
 
-void VariableInputs::clearSpaces(string &polynomial)
+int VariableInputs::deriativeStatus(string polynomial)
 {
-	for (int i = 0; i < polynomial.size(); ++i)
+	if (polynomial[0] == 'd' && polynomial[1] == '/' && polynomial[2] == 'd') 
 	{
-		if (polynomial[i] == ' ')
-		{
-			polynomial.erase(polynomial.begin() + i);
-			--i;
-		}
-	}
-}
-
-void VariableInputs::clearExponents(string &polynomial)
-{
-	clearPara(polynomial);
-	int* begin = new int;
-	int* end = new int;
-
-	for (short i = 0; i <= numOfExponents(polynomial); ++i)
-	{
-		*begin = polynomial.find_first_of('^');
-
-		if (begin != nullptr) 
-		{
-			*end = polynomial.find_first_of(')') + 1;
-			if (*begin < *end) 
-			{
-				polynomial.erase(*begin, *end - *begin);
-				i = 0;
-				*begin = 0;
-				*end = 0;
-			}
-		}
-	}
-	
-	delete[] begin, end;
-}
-
-void VariableInputs::clearVariables(string &polynomial)
-{
-	for (int i = 0; i < polynomial.size(); ++i)
-	{
-		if (polynomial[i] == 'x' ||
-			polynomial[i] == 'y' ||
-			polynomial[i] == 'z')
-		{
-			polynomial.erase(i,1);
-			--i;
-		}
-	}
-}
-
-void VariableInputs::clearSigns(string & polynomial)
-{
-	for (int i = 0; i < polynomial.size(); ++i)
-	{
-		if (polynomial[i] == '-' ||
-			polynomial[i] == '+' ||
-			polynomial[i] == '*')
-		{
-			polynomial.erase(i, 1);
-			--i;
-		}
-	}
-}
-
-void VariableInputs::clearNotNums(string & polynomial)
-{
-	proTerm = polynomial;
-	++stringIndex;
-	if (stringIndex < polynomial.size())
-	{
-		if (!isdigit(polynomial[stringIndex]))
-		{
-			polynomial.erase(stringIndex, 1);
-			--stringIndex;
-			clearNotNums(polynomial);
-		}
-	}
-	else {
-		polynomial = proTerm;
-		stringIndex = 0;
-	}
-}
-
-void VariableInputs::clearPara(string & para)
-{
-	bool exponent = 0;
-	for (int i = 0; i < para.size(); ++i)
-	{
-		char c = para[i];
-
-		if (c == '(') 
-		{
-			if (!exponent)
-			{
-				para.erase(i , 1);
-				--i;
-			}
-		}
-		else if (c == ')') 
-		{
-			if (!exponent) 
-			{
-				para.erase(i , 1);
-				--i;
-			}
-			else {
-				exponent = 0;
-			}
-		}
-		else if (c == '^') {
-			exponent = 1;
-		}
-	}
-}
-
-int VariableInputs::invaildExponent(string input)
-{
-	int look = 0;
-	for (short i = numOfExponents(input); i != 0; --i)
-	{
-		look = findN(input, i, '^');
-		if (look)
-		{
-			/// need to decide illegial paramaters
-		}
-	}
-	return 0;
-}
-
-int VariableInputs::invalidDoubleSign(string input)
-{
-
-	return 0;
-}
-
-int VariableInputs::invalidExpression(string input)
-{
-
-	return 0;
-}
-
-int VariableInputs::invaiidSyntax(string input)
-{
-
-	return 0;
-}
-
-int VariableInputs::findDoubleSign(string input, short range)
-{
-	int hayStack = 0;
-
-	for (short i = range + 1; i < input.size(); ++i)
-	{
-		if (input[i] == '+' || input[i] == '-' || 
-			input[i] == '*' || input[i] == '/')
-		{
-			if (input[i + 1] == '-')
-			{
-				if (isdigit(input[i + 2])) {
-					hayStack = i + 1;
-				}
-			}
-			else if (input[i + 2] == '-') 
-			{
-				if (isdigit(input[i + 3])) {
-					hayStack = i + 2;
-				}
-				else if (isdigit(input[i + 4])) {
-					hayStack = i + 2;
-				}
-			}
-		}
-	}
-
-	return hayStack;
-}
-
-int VariableInputs::doubleSign(string input)
-{
-	clearSpaces(input);
-
-	char* lastChar = new char;
-	short counter = 0;
-
-	for (char&c : input)
-	{
-		if (getSign(c) == '-' && *lastChar == '+' ||
-			getSign(c) == '-' && *lastChar == '-')
-		{
-			delete lastChar;
-			if (!counter) {
-				return 1;
-			}
-			else {
-				return counter;
-			}
-		}
-		*lastChar = c;
-		++counter;
-	}
-
-	return 0;
-}
-
-void VariableInputs::clearY(string & polynomial)
-{
-	if (polynomial.find('='))
-	{
-		if (polynomial.find_first_of('y') == 0)
-		{
-			if (polynomial.find(' ')) {
-				polynomial.erase(0, polynomial.find_first_of('=') + 1);
-			}
-			else {
-				polynomial.erase(0, polynomial.find_first_of('=') + 1);
-			}
-		}
-
-		else if (polynomial.find_first_of('y') == polynomial.size())
-		{
-			if (polynomial.find(' ')) {
-				polynomial.erase(polynomial.find_first_of('=') + 1, polynomial.size());
-			}
-			else {
-				polynomial.erase(polynomial.find_first_of('='), polynomial.size());
-			}
-		}
-	}
-}
-
-bool VariableInputs::equationStatus(string polynomial)
-{
-	if (polynomial.find('=')) {
 		return 1;
 	}
 	return 0;
 }
 
-void VariableInputs::numExtract(string polynomial)
+int VariableInputs::operatorIdentity(string expression)
 {
-	clearY(polynomial);
-	clearExponents(polynomial);
-	clearSpaces(polynomial);
-	collector.clear();
-
-	string* transfer = new string;			// used as a 'middle man' before converting to int
-	short* chopper = new short;
-	short* endChopper = new short;
-	
-	for (int i = numOfTerms(polynomial); i != 0; --i)
-	{	
-		try
+	if (expression.size() <= 1)
+	{
+		char c = expression[0];
+		switch (c)
 		{
-			if (i >= 2)
-			{
-				*endChopper = polynomial.find_last_not_of("+-*/");		// find last number of last term
-				*chopper = polynomial.find_last_of("+-*/");				// find fist number of last term
-				*transfer = polynomial.substr(*chopper, *endChopper);	// intermediate string for converting string to int
-				polynomial.erase(*chopper, *endChopper);				// removes the extracted item(makes the simple code possable)
-
-				try {
-					collector.push_back(stoi(*transfer));				// add to collector
-				}
-				catch (...) 
-				{
-					transfer->erase(0,1);								// handles special cases of double sign or '/' or '*'
-					if (!transfer->empty()) {
-						collector.push_back(stoi(*transfer));
-					}
-				}
-			}
-			else {
-				collector.push_back(stoi(polynomial));	
-			}
-		}
-		catch (std::out_of_range) {	
+		case('+'):
+			return 1;
 			break;
-		}
-		catch (...) { // if some jackass doubles up on signs or does not have a 1 in front of coefficent
+		case('-'):
+			return 2;
+			break;
+		case('/'):
+			return 3;
+			break;
+		case('*'):
+			return 4;
+			break;
+		default:
+			return 0;
 			break;
 		}
 	}
-	
-	delete transfer, chopper, endChopper;
+	return 0;
 }
 
-void VariableInputs::exponentExtract(string polynomial)
+int VariableInputs::simplestTerms(string expression)
 {
-	clearSpaces(polynomial); // cleans string
-	exponentCollector.clear();	// ensures collector is empty
-
-	string* transfer = new string;
-	unsigned int* startChop = new unsigned int;
-	unsigned int* endChop = new unsigned int;
-
-	for (int i = numOfExponents(polynomial); i != 0; --i)
+	int factor = 0;
+	for (char&c : expression)
 	{
-		*startChop = polynomial.find_last_of('^') + 2;
-		*endChop = polynomial.find_last_of(')') - *startChop;
-		*transfer = polynomial.substr(*startChop, *endChop);
-		polynomial.erase(*startChop - 2, polynomial.size());
-
-		try {
-			exponentCollector.push_back(stof(*transfer));
+		if (!isdigit(c) || c == ' ') {
+			factor = 1;
 		}
-		catch (std::invalid_argument)
-		{
-			if (transfer->find("xzy")) {
-				exponentExpression.push_back(*transfer);
-			}
-		}
-		catch(...) 
-		{
-			if (transfer->empty()) {
-				cout << "no arguement given" << endl;
-			}
+		else if (factor) {
+			break;
 		}
 	}
-	delete[] startChop, endChop, transfer;
+	return 0;
 }
 
-float VariableInputs::singleExponentExtract(string input, unsigned short rangeSpecifier)
+int VariableInputs::invaildExponent(string expression)
 {
-	clearSpaces(input);
-	clearPara(input);
-
-	unsigned short* begin = new unsigned short;
-	unsigned short* end = new unsigned short;
-	string* transfer = new string;
-	float hairyNutSack = 0;
-
-	if (rangeSpecifier >= numOfExponents(input))
-	{
-		delete[] begin, end, transfer;
-		return 0;
-	}
-
-	if (!rangeSpecifier) {
-		*transfer = input.substr(input.find_first_of('^') + 2, (input.find_first_of('^') + 2) - input.find_first_of(')'));
-	}
-	else
-	{
-		*begin = findN(input, rangeSpecifier, '^') + 2;
-		*end = findN(input, rangeSpecifier, ')');
-		*transfer = input.substr(*begin, *end - *begin);
-	}
-
-	try {
-		hairyNutSack = stof(*transfer);
-	}
-	catch (std::invalid_argument) {
-		exponentExpression.push_back(*transfer);
-	}
-
-	delete transfer, begin, end;
-	return hairyNutSack;
+	return 0;
 }
 
-double VariableInputs::singleNumberExtract(string input, unsigned short rangeSpecifier)
+int VariableInputs::badExpression(string expression)
 {
-	clearPara(input);
-	clearExponents(input);
-	clearVariables(input);
+	return 0;
+}
 
+void VariableInputs::allElements(string polynomial)
+{
+	/// this is the be all end all
+	using std::smatch;
+	using std::regex;
+	regex takeFloat("([^\\s]+)");
+	smatch matches;
 	string* temp = new string;
-	double intermidate = 0;
-
-	if (!rangeSpecifier) 
+	while (regex_search(polynomial, matches, takeFloat))
 	{
-		*temp = input.substr(0, input.find_first_of("+-*/"));
-		if (temp->empty()) {
-			*temp = input.substr(findN(input, 1, ' '));
-		}
+		*temp = matches.str();
+		polynomial = matches.suffix().str();
+		List->addLink(*temp);
 	}
-	else
-	{
-		short begin = findN(input, rangeSpecifier, ')');		// something wrong here
-		short end = findN(input, rangeSpecifier, ')');			// something wrong here
-		*temp = input.substr(begin, end - begin);
-	}
-
-	try {
-		intermidate = stod(*temp);
-	}
-	catch (std::invalid_argument)
-	{
-	
-	}
-
+	List->printList();
 	delete temp;
-	return intermidate;
 }
 
-
-
+void VariableInputs::allNumberExtract(string input)
+{
+	using std::smatch;
+	using std::regex;				
+	regex takeFloat("([\\^*\\(]*[+-]?([\\d]*[\.])?[\\d]+)");	
+	smatch matches;
+	string* temp = new string;
+	while (regex_search(input, matches, takeFloat))
+	{
+		*temp = matches.str();
+		input = matches.suffix().str();
+		cout << *temp << endl;
+		
+	}
+	delete temp;
+}
 

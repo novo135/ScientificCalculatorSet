@@ -1,16 +1,19 @@
+#include <iostream>
+#include "VariableInputs.h"
+#include "MathOperation.h"
+
 #ifndef UTILITITES_H
 #define UTILITITES_H
 
-class Utilitites
+class Utilitites : VariableInputs, MathOperation
 {
 public:
 	Utilitites();
+	Utilitites(float data);
 	virtual ~Utilitites();
-
-
-
-private:
 	
+protected:
+	char* numBuff[65];
 
 };
 
