@@ -15,6 +15,7 @@ int main(int* argv[], int argc)
 	using std::cin;
 	using std::string;
 
+	// test cases
 	string poly = "-16x^(-10) + (-200x^(2))^(-6) * (-29)^(1.5) -  -4 + 456 + 8x^(x) + 12 * 18 + 45x ";
 	string def = "-19x^(2)";
 	string test = "(-256 * 512)^(2) / 2^(6) + (13 - 7) + x^(2) + 12x^(4)";
