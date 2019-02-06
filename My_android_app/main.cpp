@@ -8,7 +8,7 @@
 #include "MathOperation.h"
 #include "Utilitites.h"
 
-int main(int* argv[], int argc)
+int main(char* argv[], int argc)
 {
 	using std::endl;
 	using std::cout;
