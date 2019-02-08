@@ -3,7 +3,7 @@
 #define VARIABLE_IN_H
 #include <string>
 #include <vector>
-#include "MathOperation.h"
+#include "MathOperation.h"	/// @ ERROR HERE!
 #include "LinkedList.h"
 using std::string;
 using std::vector;
